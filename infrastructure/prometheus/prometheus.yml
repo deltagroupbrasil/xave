@@ -1,0 +1,57 @@
+# Prometheus configuration for Flerte Gamificado
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Backend API
+  - job_name: 'flerte-backend'
+    static_configs:
+      - targets: ['backend:3000']
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 10s
+
+  # PostgreSQL
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # MinIO
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['minio:9000']
+    scrape_interval: 30s
+
+  # Node Exporter (if added)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+# Alerting rules
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Remote write configuration (for long-term storage)
+# remote_write:
+#   - url: "http://remote-storage:9201/write"

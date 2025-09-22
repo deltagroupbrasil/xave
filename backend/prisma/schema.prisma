@@ -1,0 +1,377 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// USER MANAGEMENT
+// ================================
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  emailVerified   Boolean  @default(false)
+  passwordHash    String?
+  authProvider    AuthProvider @default(EMAIL)
+  externalId      String?
+  firstName       String?
+  lastName        String?
+  dateOfBirth     DateTime?
+  gender          Gender?
+  phoneNumber     String?
+  profilePicture  String?
+  isActive        Boolean  @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  subscription    Subscription?
+  characterConfig CharacterConfig?
+  sessions        Session[]
+  interactions    Interaction[]
+  userMissions    UserMission[]
+  userAchievements UserAchievement[]
+  fashionAnalyses FashionAnalysis[]
+  payments        Payment[]
+  
+  @@map("users")
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  userId      String
+  channel     Channel  @default(APP)
+  contextData Json?
+  lastInteraction DateTime @default(now())
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// ================================
+// SUBSCRIPTIONS & PAYMENTS
+// ================================
+
+model Subscription {
+  id                    String             @id @default(uuid())
+  userId                String             @unique
+  plan                  SubscriptionPlan   @default(FREE)
+  status                SubscriptionStatus @default(ACTIVE)
+  startDate             DateTime           @default(now())
+  endDate               DateTime?
+  autoRenew             Boolean            @default(false)
+  paymentMethodId       String?
+  stripeSubscriptionId  String?
+  pagarmeSubscriptionId String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments              Payment[]
+  
+  @@map("subscriptions")
+}
+
+model Payment {
+  id                    String        @id @default(uuid())
+  userId                String
+  subscriptionId        String?
+  amount                Decimal       @db.Decimal(10,2)
+  currency              String        @default("BRL")
+  status                PaymentStatus @default(PENDING)
+  method                PaymentMethod
+  stripePaymentIntentId String?
+  pagarmeTransactionId  String?
+  metadata              Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription          Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ================================
+// CHARACTER CONFIGURATION
+// ================================
+
+model CharacterConfig {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  name                  String   @default("Sofia")
+  personality           String   @default("friendly")
+  interests             String[]
+  communicationStyle    String   @default("casual")
+  responseLength        String   @default("medium")
+  humorLevel            Int      @default(5)
+  flirtinessLevel       Int      @default(5)
+  supportivenessLevel   Int      @default(8)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("character_configs")
+}
+
+// ================================
+// INTERACTIONS & AI
+// ================================
+
+model Interaction {
+  id              String   @id @default(uuid())
+  userId          String
+  channel         Channel
+  type            InteractionType
+  originalContent String?  // Original user input
+  processedContent String? // Processed/transcribed content
+  aiResponse      String
+  score           Int?     // 0-100 score
+  feedbackData    Json?    // Structured feedback
+  xpGenerated     Int      @default(0)
+  moderationFlags Json?    // Moderation results
+  processingTime  Int?     // Processing time in ms
+  createdAt       DateTime @default(now())
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("interactions")
+}
+
+// ================================
+// GAMIFICATION SYSTEM
+// ================================
+
+model Mission {
+  id              String      @id @default(uuid())
+  title           String
+  description     String
+  type            MissionType
+  difficulty      Int         @default(1)
+  xpReward        Int         @default(10)
+  requirements    Json
+  isActive        Boolean     @default(true)
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime    @default(now())
+  
+  userMissions    UserMission[]
+  
+  @@index([type])
+  @@index([isActive])
+  @@map("missions")
+}
+
+model UserMission {
+  id              String        @id @default(uuid())
+  userId          String
+  missionId       String
+  status          MissionStatus @default(AVAILABLE)
+  progress        Int           @default(0)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission         Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, missionId])
+  @@map("user_missions")
+}
+
+model Achievement {
+  id              String          @id @default(uuid())
+  name            String          @unique
+  description     String
+  type            AchievementType
+  icon            String?
+  requirement     Json
+  xpReward        Int             @default(0)
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  
+  userAchievements UserAchievement[]
+  
+  @@index([type])
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id              String   @id @default(uuid())
+  userId          String
+  achievementId   String
+  unlockedAt      DateTime @default(now())
+  
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement     Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model UserStats {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  totalXp         Int      @default(0)
+  currentLevel    Int      @default(1)
+  totalInteractions Int    @default(0)
+  averageScore    Float?
+  skillsData      Json?    // Radar chart data for skills
+  streakDays      Int      @default(0)
+  lastActiveDate  DateTime?
+  updatedAt       DateTime @updatedAt
+  
+  @@map("user_stats")
+}
+
+// ================================
+// FASHION MODULE
+// ================================
+
+model FashionTrend {
+  id              String          @id @default(uuid())
+  name            String
+  description     String
+  category        FashionCategory
+  season          String?
+  year            Int?
+  popularity      Int             @default(50)
+  imageUrl        String?
+  tags            String[]
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  
+  @@index([category])
+  @@index([isActive])
+  @@map("fashion_trends")
+}
+
+model FashionAnalysis {
+  id              String   @id @default(uuid())
+  userId          String
+  eventType       String   // bar, festa, encontro, trabalho, etc.
+  imageUrl        String?
+  analysisData    Json     // Computer vision results
+  feedback        String
+  suggestions     Json     // Improvement suggestions
+  score           Int?     // Fashion score 0-100
+  createdAt       DateTime @default(now())
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("fashion_analyses")
+}
+
+// ================================
+// ENUMS
+// ================================
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  APPLE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  PREFER_NOT_TO_SAY
+}
+
+enum Channel {
+  APP
+  WHATSAPP
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PREMIUM
+  VIP
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  BOLETO
+  PAYPAL
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PersonalityType {
+  PLAYFUL
+  ROMANTIC
+  CONFIDENT
+  MYSTERIOUS
+  FUNNY
+  INTELLECTUAL
+}
+
+enum InteractionType {
+  TEXT
+  AUDIO
+  IMAGE
+}
+
+enum MissionType {
+  DAILY
+  WEEKLY
+  CAMPAIGN
+  SPECIAL
+}
+
+enum MissionStatus {
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+  EXPIRED
+}
+
+enum AchievementType {
+  INTERACTION_COUNT
+  STREAK
+  SKILL_LEVEL
+  SPECIAL_EVENT
+  SOCIAL
+}
+
+enum FashionCategory {
+  CASUAL
+  FORMAL
+  SPORTY
+  TRENDY
+  CLASSIC
+  BOHEMIAN
+  MINIMALIST
+  EDGY
+}
