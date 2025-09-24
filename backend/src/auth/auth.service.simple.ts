@@ -41,14 +41,14 @@ export class AuthService {
         emailVerified: false,
         subscription: {
           create: {
-            plan: 'FREE',
+            plan: 'FREE' as const,
             status: 'ACTIVE',
           },
         },
         characterConfig: {
           create: {
             name: 'Sofia',
-            personality: 'friendly',
+            personality: 'PLAYFUL',
             interests: ['música', 'cinema'],
           },
         },

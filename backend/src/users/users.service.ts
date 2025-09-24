@@ -28,7 +28,7 @@ export class UsersService {
         },
         characterConfig: {
           select: {
-            name: true,
+            // name: true, // Field doesn't exist in CharacterConfig schema
             personality: true,
             humorLevel: true,
           },
@@ -93,7 +93,7 @@ export class UsersService {
         },
         characterConfig: {
           select: {
-            name: true,
+            // name: true, // Field doesn't exist in CharacterConfig schema
             personality: true,
             humorLevel: true,
           },

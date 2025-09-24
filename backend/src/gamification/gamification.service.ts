@@ -19,9 +19,9 @@ export class GamificationService {
 
     return achievements.map(ua => ({
       id: ua.achievement.id,
-      name: ua.achievement.name,
+      name: ua.achievement.name, // This field exists
       description: ua.achievement.description,
-      icon: ua.achievement.icon,
+      icon: ua.achievement.icon, // This field exists
       xpReward: ua.achievement.xpReward,
       progress: 100, // Mock progress
       isCompleted: true, // Mock completion
@@ -152,11 +152,11 @@ export class GamificationService {
       title: um.mission.title,
       description: um.mission.description,
       type: um.mission.type,
-      difficulty: um.mission.difficulty,
+      difficulty: um.mission.difficulty, // This field exists
       xpReward: um.mission.xpReward,
       status: um.status,
       progress: um.progress,
-      startedAt: um.startedAt,
+      startedAt: um.createdAt, // Using createdAt instead of startedAt
       completedAt: um.completedAt,
     }));
   }
@@ -246,7 +246,7 @@ export class GamificationService {
       },
     });
 
-    this.logger.log(`Achievement awarded: ${achievement.name} to user ${userId}`, 'GamificationService');
+    this.logger.log(`Achievement awarded: ${achievement.name} to user ${userId}`, 'GamificationService'); // achievement.name exists
 
     return userAchievement;
   }
@@ -259,13 +259,13 @@ export class GamificationService {
     const awardedAchievements = [];
 
     for (const achievement of achievements) {
-      const requirement = achievement.requirement as any;
+      const requirement = achievement.requirement as any; // achievement.requirement exists
       
       let shouldAward = false;
 
-      if (achievement.type === 'INTERACTION_COUNT' && requirement.interactions) {
+      if (achievement.type === 'INTERACTION_COUNT' && requirement.interactions) { // achievement.type exists
         shouldAward = interactionCount >= requirement.interactions;
-      } else if (achievement.type === 'SKILL_LEVEL' && requirement.minScore) {
+      } else if (achievement.type === 'SKILL_LEVEL' && requirement.minScore) { // achievement.type exists
         shouldAward = score >= requirement.minScore;
       }
 

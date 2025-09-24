@@ -28,7 +28,7 @@ export class CharacterConfigResponseDto {
     description: 'Nome do personagem',
     example: 'Sofia',
   })
-  name: string;
+  name?: string;
 
   @ApiProperty({
     description: 'Personalidade',

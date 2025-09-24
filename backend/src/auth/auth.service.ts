@@ -51,7 +51,7 @@ export class AuthService {
       await tx.subscription.create({
         data: {
           userId: newUser.id,
-          plan: 'FREE',
+          plan: 'FREE' as const,
           status: 'ACTIVE',
         },
       });
@@ -61,7 +61,7 @@ export class AuthService {
         data: {
           userId: newUser.id,
           name: 'Sofia',
-          personality: 'friendly',
+          personality: 'PLAYFUL',
           interests: ['música', 'cinema'],
         },
       });
@@ -200,7 +200,7 @@ export class AuthService {
       await this.database.subscription.create({
         data: {
           userId: user.id,
-          plan: 'FREE',
+          plan: 'FREE' as const,
           status: 'ACTIVE',
         },
       });
@@ -209,7 +209,7 @@ export class AuthService {
         data: {
           userId: user.id,
           name: 'Sofia',
-          personality: 'friendly',
+          personality: 'PLAYFUL',
           interests: [],
         },
       });

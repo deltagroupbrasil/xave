@@ -175,12 +175,45 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
             ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      );
+    }
+
+  Widget _buildStatItem(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.pink[600], size: 32),
+        SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.pink[700],
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
     );
   }
+
+  String _getLevelTitle(int level) {
+    if (level == 1) return 'Iniciante';
+    if (level <= 3) return 'Aprendiz';
+    if (level <= 6) return 'Intermediário';
+    if (level <= 10) return 'Avançado';
+    return 'Mestre';
+  }
 }
+
 
 class ChatBubble extends StatelessWidget {
   final ChatMessage message;
@@ -359,6 +392,7 @@ class ProfilePage extends StatelessWidget {
             padding: EdgeInsets.all(16),
             child: Column(
               children: [
+                // Avatar
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.pink[100],
@@ -366,6 +400,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 SizedBox(height: 16),
 
+                // User info
                 if (authProvider.isAuthenticated) ...[
                   Text(
                     authProvider.user!.fullName,
@@ -391,6 +426,7 @@ class ProfilePage extends StatelessWidget {
 
                 SizedBox(height: 24),
 
+                // Stats Card
                 Card(
                   child: Padding(
                     padding: EdgeInsets.all(16),
@@ -407,6 +443,7 @@ class ProfilePage extends StatelessWidget {
 
                 SizedBox(height: 16),
 
+                // Auth buttons - SEMPRE MOSTRAR
                 if (authProvider.isAuthenticated)
                   Card(
                     child: ListTile(
@@ -437,6 +474,7 @@ class ProfilePage extends StatelessWidget {
 
                 SizedBox(height: 8),
 
+                // Settings
                 Card(
                   child: ListTile(
                     leading: Icon(Icons.settings, color: Colors.grey[600]),
@@ -447,6 +485,7 @@ class ProfilePage extends StatelessWidget {
 
                 SizedBox(height: 20),
 
+                // Welcome message
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16),

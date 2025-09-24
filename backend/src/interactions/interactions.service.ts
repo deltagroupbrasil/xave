@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { LoggerService } from '../common/services/logger.service';
+import { AiOrchestratorService } from '../ai-orchestrator/ai-orchestrator.service';
 import { CreateInteractionDto } from './dto/create-interaction.dto';
 import { InteractionResponseDto } from './dto/interaction-response.dto';
 
@@ -9,6 +10,7 @@ export class InteractionsService {
   constructor(
     private readonly database: DatabaseService,
     private readonly logger: LoggerService,
+    private readonly aiOrchestrator: AiOrchestratorService,
   ) {}
 
   async processInteraction(userId: string, createInteractionDto: CreateInteractionDto): Promise<InteractionResponseDto> {
@@ -20,12 +22,18 @@ export class InteractionsService {
         throw new BadRequestException('Conteúdo da interação é obrigatório');
       }
 
+      // Moderate content first
+      const moderation = await this.aiOrchestrator.moderateContent(content);
+      if (!moderation.safe) {
+        throw new BadRequestException(`Conteúdo inadequado: ${moderation.reason}`);
+      }
+
       // Calculate score
       const score = this.calculateScore(content);
-      
-      // Generate AI response
-      const aiResponse = this.generateAIResponse(content, 'PLAYFUL');
-      
+
+      // Generate AI response using OpenAI
+      const aiResponse = await this.aiOrchestrator.generateChatResponse(content, userId);
+
       // Generate feedback
       const feedback = this.generateFeedback(content, score);
       
